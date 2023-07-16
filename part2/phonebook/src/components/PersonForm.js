@@ -9,6 +9,7 @@ const PersonForm = ({
     <div>
       name:{" "}
       <input
+        required
         value={nameValue}
         onChange={onNameChange}
       />
@@ -16,6 +17,7 @@ const PersonForm = ({
     <div>
       number:{" "}
       <input
+        required
         value={numberValue}
         onChange={onNumberChange}
       />

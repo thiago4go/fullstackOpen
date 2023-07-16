@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Person from "./components/Person";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
+import phoneService from "./services/phone";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -11,8 +11,8 @@ const App = () => {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
+    phoneService.getAll().then((initialPersons) => {
+      setPersons(initialPersons);
     });
   }, []);
 
@@ -25,12 +25,35 @@ const App = () => {
     };
 
     if (persons.some((person) => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`);
+      alert(
+        `${newName} is already added to phonebook, replace the old number with a new one: ${newNumber}?`
+      );
+      const person = persons.find((p) => p.name === newName);
+      const changedPerson = { ...person, number: newNumber };
+      phoneService.update(person.id, changedPerson).then((returnedPerson) => {
+        setPersons(
+          persons.map((p) => (p.id === person.id ? returnedPerson : p))
+        );
+      });
+      setNewNumber("");
+      setNewName("");
       return;
     }
-    setPersons(persons.concat(personObject));
-    setNewNumber("");
-    setNewName("");
+
+    phoneService.create(personObject).then((returnedPerson) => {
+      setPersons(persons.concat(returnedPerson));
+      setNewNumber("");
+      setNewName("");
+    });
+  };
+
+  const deletePerson = (id) => {
+    const person = persons.find((p) => p.id === id);
+    if (window.confirm(`Delete ${person.name}?`)) {
+      phoneService.deleteEntry(id).then(() => {
+        setPersons(persons.filter((p) => p.id !== id));
+      });
+    }
   };
 
   const handlePersonChange = (event) => {
@@ -69,6 +92,7 @@ const App = () => {
         <Person
           key={person.id}
           person={person}
+          deletePerson={() => deletePerson(person.id)}
         />
       ))}
     </div>
